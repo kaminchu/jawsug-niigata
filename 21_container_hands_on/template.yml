@@ -1,0 +1,420 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  This CloudFormation template creates a VPC public subnets private subnets and security groups for WordPress on ECS Fargate
+Parameters:
+  VpcCIDR:
+    Description: The CIDR block for the VPC
+    Type: String
+    Default: 10.0.0.0/16
+  NATPublicSubnet1CIDR:
+    Description: The CIDR block for the NAT gateway public subnet one in
+      availability zone one
+    Type: String
+    Default: 10.0.1.0/24
+  NATPublicSubnet2CIDR:
+    Description: The CIDR block for the NAT gateway public subnet two in
+      availability zone two
+    Type: String
+    Default: 10.0.2.0/24
+  ALBPublicSubnet1CIDR:
+    Description: The CIDR block for the ALB public subnet one in availability zone one
+    Type: String
+    Default: 10.0.3.0/24
+  ALBPublicSubnet2CIDR:
+    Description: The CIDR block for the ALB public subnet two in availability zone two
+    Type: String
+    Default: 10.0.4.0/24
+  EFSPublicSubnet1CIDR:
+    Description: The CIDR block for the EFS public subnet one in availability zone one
+    Type: String
+    Default: 10.0.5.0/24
+  EFSPublicSubnet2CIDR:
+    Description: The CIDR block for the EFS public subnet two in availability zone two
+    Type: String
+    Default: 10.0.6.0/24
+  FargateSubnet1CIDR:
+    Description: The CIDR block for the Fargate private subnet one in availability zone one
+    Type: String
+    Default: 10.0.7.0/24
+  FargateSubnet2CIDR:
+    Description: The CIDR block for the Fargate private subnet two in availability zone two
+    Type: String
+    Default: 10.0.8.0/24
+  RDSSubnet1CIDR:
+    Description: The CIDR block for the RDS private subnet one in availability zone one
+    Type: String
+    Default: 10.0.9.0/24
+  RDSSubnet2CIDR:
+    Description: The CIDR block for the RDS private subnet two in availability zone two
+    Type: String
+    Default: 10.0.10.0/24
+Mappings:
+  RegionMap:
+    ap-northeast-1:
+      AZ1: ap-northeast-1a
+      AZ2: ap-northeast-1c
+Resources:
+  WPVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: WPVPC
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: WPIGW
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref WPVPC
+      InternetGatewayId: !Ref InternetGateway
+  ALBPublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref WPVPC
+      CidrBlock: !Ref ALBPublicSubnet1CIDR
+      AvailabilityZone: !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - AZ1
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: ALBPublicSubnet1
+  ALBPublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref WPVPC
+      CidrBlock: !Ref ALBPublicSubnet2CIDR
+      AvailabilityZone: !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - AZ2
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: ALBPublicSubnet2
+  EFSPublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref WPVPC
+      CidrBlock: !Ref EFSPublicSubnet1CIDR
+      AvailabilityZone: !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - AZ1
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: EFSPublicSubnet1
+  EFSPublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref WPVPC
+      CidrBlock: !Ref EFSPublicSubnet2CIDR
+      AvailabilityZone: !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - AZ2
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: EFSPublicSubnet2
+  NATPublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref WPVPC
+      CidrBlock: !Ref NATPublicSubnet1CIDR
+      AvailabilityZone: !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - AZ1
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: NATPublicSubnet1
+  NATPublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref WPVPC
+      CidrBlock: !Ref NATPublicSubnet2CIDR
+      AvailabilityZone: !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - AZ2
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: NATPublicSubnet2
+  FargateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref WPVPC
+      CidrBlock: !Ref FargateSubnet1CIDR
+      AvailabilityZone: !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - AZ1
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: FargateSubnet1
+  FargateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref WPVPC
+      CidrBlock: !Ref FargateSubnet2CIDR
+      AvailabilityZone: !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - AZ2
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: FargateSubnet2
+  RDSSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref WPVPC
+      CidrBlock: !Ref RDSSubnet1CIDR
+      AvailabilityZone: !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - AZ1
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: RDSSubnet1
+  RDSSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref WPVPC
+      CidrBlock: !Ref RDSSubnet2CIDR
+      AvailabilityZone: !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - AZ2
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: RDSSubnet2
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref WPVPC
+      Tags:
+        - Key: Name
+          Value: PublicRouteTable
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  ALBPublicSubnetAssoc1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref ALBPublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+  ALBPublicSubnetAssoc2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref ALBPublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+  NATSubnetAssoc1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref NATPublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+  NATSubnetAssoc2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref NATPublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+  EFSSubnetAssoc1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref EFSPublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+  EFSSubnetAssoc2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref EFSPublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+  FargateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref WPVPC
+      Tags:
+        - Key: Name
+          Value: FargateRouteTable1
+  FargateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref WPVPC
+      Tags:
+        - Key: Name
+          Value: FargateRouteTable2
+  FargateSubnetAssoc1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref FargateSubnet1
+      RouteTableId: !Ref FargateRouteTable1
+  FargateSubnetAssoc2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref FargateSubnet2
+      RouteTableId: !Ref FargateRouteTable2
+  NatEIP1:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+  NatGateway1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEIP1.AllocationId
+      SubnetId: !Ref NATPublicSubnet1
+      Tags:
+        - Key: Name
+          Value: NatGateway1
+  NatEIP2:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+  NatGateway2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEIP2.AllocationId
+      SubnetId: !Ref NATPublicSubnet2
+      Tags:
+        - Key: Name
+          Value: NatGateway2
+  FargateRoute1:
+    Type: AWS::EC2::Route
+    DependsOn: NatGateway1
+    Properties:
+      RouteTableId: !Ref FargateRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway1
+  FargateRoute2:
+    Type: AWS::EC2::Route
+    DependsOn: NatGateway2
+    Properties:
+      RouteTableId: !Ref FargateRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway2
+  RDSRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref WPVPC
+      Tags:
+        - Key: Name
+          Value: RDSRouteTable
+  RDSSubnetAssoc1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref RDSSubnet1
+      RouteTableId: !Ref RDSRouteTable
+  RDSSubnetAssoc2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref RDSSubnet2
+      RouteTableId: !Ref RDSRouteTable
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for ALB with ingress port 80
+        egress to Fargate
+      VpcId: !Ref WPVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: ALBSG
+  EFSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for EFS
+      VpcId: !Ref WPVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 2049
+          ToPort: 2049
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: EFSSG
+  FargateSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Fargate with ingress from ALB and egress to RDS
+      VpcId: !Ref WPVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+      Tags:
+        - Key: Name
+          Value: FargateSG
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for RDS with ingress from Fargate and egress open
+      VpcId: !Ref WPVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !Ref FargateSecurityGroup
+      Tags:
+        - Key: Name
+          Value: RDSSG
+Outputs:
+  VpcId:
+    Description: The VPC ID
+    Value: !Ref WPVPC
+  PublicSubnets:
+    Description: The public subnet IDs for ALB and NAT
+    Value: !Join
+      - ' '
+      - - !Ref ALBPublicSubnet1
+        - !Ref ALBPublicSubnet2
+        - !Ref NATPublicSubnet1
+        - !Ref NATPublicSubnet2
+  FargateSubnets:
+    Description: The private subnet IDs for Fargate
+    Value: !Join
+      - ' '
+      - - !Ref FargateSubnet1
+        - !Ref FargateSubnet2
+  RDSSubnets:
+    Description: The private subnet IDs for RDS
+    Value: !Join
+      - ' '
+      - - !Ref RDSSubnet1
+        - !Ref RDSSubnet2
+  ALBSG:
+    Description: The ALB security group ID
+    Value: !Ref ALBSecurityGroup
+  FargateSG:
+    Description: The Fargate security group ID
+    Value: !Ref FargateSecurityGroup
+  RDSSG:
+    Description: The RDS security group ID
+    Value: !Ref RDSSecurityGroup
