@@ -357,11 +357,11 @@ WORDPRESS_NONCE_SALT=<生成された値>
 5. ECSタスク定義（すべてのリビジョンを登録解除してから削除）
 6. *RDSインスタンス（`wordpress-db`）
 7. *RDSスナップショット(存在する場合)
-7. RDSサブネットグループ（`wordpress-subnet-group`）
-8. *EFSファイルシステム（`wordpress-efs`）
-9. CloudFormationスタック（`jawsugniigata21`）
-10. IAMロール（`CodeDeployECSRole`と`ecsTaskExecutionRole`）
-11. CloudWatch Logsのロググループ
+8. RDSサブネットグループ（`wordpress-subnet-group`）
+9. *EFSファイルシステム（`wordpress-efs`）
+10. CloudFormationスタック（`jawsugniigata21`）
+11. IAMロール（`CodeDeployECSRole`と`ecsTaskExecutionRole`）
+12. CloudWatch Logsのロググループ
 
 **注意**: 特に「*」がついているリソース（ECSサービス、ALB、RDS、EFS）は課金が発生する場合があるため、忘れずに削除してください。
 
