@@ -107,7 +107,7 @@ CodeDeployがECSにデプロイするために必要なロールを作成しま�
 
 **ロールの詳細**
 - ロール名: `CodeDeployECSRole`
-- 説明: `Role for CodeDeploy to deploy to ECS`
+- 説明: そのまま
 
 5. 「ロールの作成」ボタンをクリックします。
 
@@ -117,9 +117,9 @@ WordPressのアップロードファイルなどを永続化するためのEFS�
 
 1. [EFSコンソール](https://ap-northeast-1.console.aws.amazon.com/efs/home?region=ap-northeast-1#/file-systems)に移動します。
 2. 「ファイルシステムの作成」ボタンをクリックします。
-3. 以下の設定でファイルシステムを作成します：
+3. 「カスタマイズ」をクリックし、以下の設定でファイルシステムを作成します：
 
-**全般設定**
+**全般**
 - 名前: `wordpress-efs`
 - 自動バックアップ: 無効化
 
@@ -128,12 +128,15 @@ WordPressのアップロードファイルなどを永続化するためのEFS�
 - マウントターゲット:
   - アベイラビリティーゾーン: `ap-northeast-1a`
     - サブネット: `EFSPublicSubnet1`
-    - セキュリティグループ: `EFSSG`
+    - セキュリティグループ: `EFSSecurityGroup`
   - アベイラビリティーゾーン: `ap-northeast-1c`
     - サブネット: `EFSPublicSubnet2`
-    - セキュリティグループ: `EFSSG`
+    - セキュリティグループ: `EFSSecurityGroup`
 
-4. 「ファイルシステムの作成」ボタンをクリックします。
+**ファイルシステムポリシー**
+そのまま
+
+4. 「作成」ボタンをクリックします。
 5. 作成されたファイルシステムの**ファイルシステムID**をメモしておきます。
 
 ## 5. ECSクラスタの作成
@@ -142,11 +145,11 @@ WordPressのアップロードファイルなどを永続化するためのEFS�
 2. 「クラスタの作成」ボタンをクリックします。
 3. 以下の設定でクラスタを作成します：
 
-**クラスターテンプレート**
-- ネットワーキングのみを選択
-
 **クラスター設定**
 - クラスター名: `wordpress-cluster`
+
+**インフラストラクチャ**
+- AWS Fargateのみを選択
 
 4. 「作成」ボタンをクリックします。
 
@@ -163,11 +166,12 @@ WordPressのアップロードファイルなどを永続化するためのEFS�
 - AWS Fargate を選択
 
 **オペレーティングシステムファミリー**
-- Linux を選択
+- Linux/X86_64 を選択
 
 **タスクサイズ**
-- タスクメモリ: `2GB`
-- タスクCPU: `1 vCPU`
+- CPU: `1 vCPU`
+- メモリ: `2GB`
+
 
 **タスクロール**
 - なし（デフォルトのまま）
@@ -175,8 +179,8 @@ WordPressのアップロードファイルなどを永続化するためのEFS�
 **タスク実行ロール**
 - 新しいロールの作成を選択
 
-**コンテナの定義**
-- コンテナ名: `wordpress`
+**コンテナ**
+- 名前: `wordpress`
 - イメージURI: `public.ecr.aws/docker/library/wordpress:6.6.2-php8.2-apache`
 - ポートマッピング:
   - コンテナポート: `80`
@@ -208,14 +212,14 @@ WORDPRESS_NONCE_SALT=<生成された値>
 
 **ストレージ**
 - ボリューム:
-  - 名前: `wordpress-content`
+  - ボリューム名: `wordpress-content`
+  - 設定タイプ: タスク定義の作成時に設定
   - ボリュームタイプ: `EFS`
   - ファイルシステムID: <EFS作成時にメモしたID>
-  - ルートディレクトリ: `/`（空白のままでOK）
-  - アクセスポイント: 使用しない
-  - 暗号化: 有効
+  - ルートディレクトリ: `/`（デフォルトのまま）
+  - アクセスポイントID: 使用しない
 
-- マウントポイント:
+- コンテナマウントポイント:
   - コンテナ名: `wordpress`
   - ソースボリューム: `wordpress-content`
   - コンテナパス: `/var/www/html/wp-content`
@@ -231,48 +235,49 @@ WORDPRESS_NONCE_SALT=<生成された値>
 4. 以下の設定でサービスを作成します：
 
 **コンピューティングオプション**
+- コンピューティングオプション: 起動タイプ
 - 起動タイプ: `FARGATE`
 
-**アプリケーションタイプ**
-- サービスを選択
-
-**ファミリー**
-- 先ほど作成した`wordpress-task`を選択
-
-**サービス名**
-- `wordpress-service`
-
-**サービスタイプ**
-- レプリカを選択
-
-**必要なタスク**
-- `0`（後で変更します）
-
-**デプロイオプション**
-- デプロイタイプ: `ブルー/グリーンデプロイ`
-- デプロイ設定: `CodeDeployDefault.ECSAllAtOnce`
-- サービスロール: 先ほど作成した`CodeDeployECSRole`を選択
+**デプロイ設定**
+- アプリケーションタイプ: サービス
+- ファミリー: 先ほど作成した`wordpress-task`を選択
+- サービス名: `wordpress-service`
+- サービスタイプ: レプリカ
+- 必要なタスク: `0`(後で変更します)
+- デプロイオプション:
+  - デプロイタイプ: `ブルー/グリーンデプロイ`
+  - デプロイ設定: `CodeDeployDefault.ECSAllAtOnce`
+  - サービスロール: 先ほど作成した`CodeDeployECSRole`を選択
 
 **ネットワーキング**
 - VPC: `WPVPC`
 - サブネット: `FargateSubnet1`と`FargateSubnet2`を選択
-- セキュリティグループ: `FargateSG`を選択
-- パブリックIP: 「DISABLED」を選択
+- セキュリティグループ: `FargateSecurityGroup`を選択
+- パブリックIP: 「オフ」を選択
 
 **ロードバランシング**
+- ロードバランシングを使用: チェック
 - ロードバランサーの種類: `Application Load Balancer`
+- コンテナ: `wordpress 80:80`
 - ロードバランサー: 「新しいロードバランサーを作成」を選択
 - ロードバランサー名: `wordpress-alb`
-- リスナーポート: `80:HTTP`
-- ターゲットグループ1の名前: `wordpress-tg-1`
-- ターゲットグループ2の名前: `wordpress-tg-2`
-- ヘルスチェックパス: `/wp-includes/images/blank.gif`
-- ヘルスチェックの詳細設定:
-  - ヘルスチェックの猶予期間: `60`秒
-  - ヘルスチェックのタイムアウト: `5`秒
-  - ヘルスチェックの間隔: `30`秒
-  - 正常のしきい値: `2`
-  - 異常のしきい値: `3`
+- リスナーポート:
+  - プロダクションリスナーポート: `80`
+  - プロダクションリスナープロトコル: `HTTP`
+- ターゲットグループ1:
+  - 新しいターゲットグループの作成
+  - ターゲットグループ1名: `wordpress-tg-1`
+  - ターゲットグループ1のプロトコル: `HTTP`(デフォルトのまま)
+  - 登録解除の遅延: `300`(デフォルトのまま)
+  - ヘルスチェックのプロトコル: `HTTP`(デフォルトのまま)
+  - ヘルスチェックパス: `/wp-includes/images/blank.gif`
+- ターゲットグループ2:
+  - 新しいターゲットグループの作成
+  - ターゲットグループ1名: `wordpress-tg-2`
+  - ターゲットグループ1のプロトコル: `HTTP`(デフォルトのまま)
+  - 登録解除の遅延: `300`(デフォルトのまま)
+  - ヘルスチェックのプロトコル: `HTTP`(デフォルトのまま)
+  - ヘルスチェックパス: `/wp-includes/images/blank.gif`
 
 5. 「作成」ボタンをクリックします。
 
@@ -280,12 +285,12 @@ WORDPRESS_NONCE_SALT=<生成された値>
 
 1. [EC2コンソール](https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#LoadBalancers:)に移動し、「ロードバランサー」を選択します。
 2. 先ほど作成した`wordpress-alb`を選択します。
-3. 「ネットワークマッピング」タブを選択し、「編集」ボタンをクリックします。
+3. 「ネットワークマッピング」タブを選択し、「サブネットの編集」ボタンをクリックします。
 4. サブネットを`ALBPublicSubnet1`と`ALBPublicSubnet2`に変更します。
-5. 「変更の保存」ボタンをクリックします。
+5. 「変更内容の保存」ボタンをクリックします。
 6. 「セキュリティ」タブを選択し、「編集」ボタンをクリックします。
-7. セキュリティグループを`ALBSG`に変更します。
-8. 「変更の保存」ボタンをクリックします。
+7. セキュリティグループを`ALBSecurityGroup`に変更します。
+8. 「変更内容の保存」ボタンをクリックします。
 
 ## 9. サービスの更新
 
@@ -300,7 +305,7 @@ WORDPRESS_NONCE_SALT=<生成された値>
 2. `wordpress-alb`を選択し、「DNS名」をコピーします。
 3. ブラウザで`http://<ALBのDNS名>/`にアクセスします。
 4. WordPressの初期設定画面が表示されるので、必要な情報を入力してWordPressをセットアップします。
-5. セットアップ完了後、WordPressの管理画面にログインし、いくつかのメディアファイルをアップロードしてEFSの動作を確認します。
+5. セットアップ完了後、WordPressの管理画面にログインし、いくつかのメディアファイルをアップロードします。(EFSの動作を確認するため)
 
 ## 11. WordPressのバージョンアップ
 
@@ -308,21 +313,25 @@ WORDPRESS_NONCE_SALT=<生成された値>
 
 1. ECSコンソールの左側のナビゲーションペインから「タスク定義」を選択します。
 2. `wordpress-task`を選択し、「新しいリビジョンの作成」ボタンをクリックします。
-3. コンテナ定義の「イメージURI」を`public.ecr.aws/docker/library/wordpress:6.7.2-php8.2-apache`に変更します。
+3. コンテナの詳細の「イメージURI」を`public.ecr.aws/docker/library/wordpress:6.7.2-php8.2-apache`に変更します。
 4. 「作成」ボタンをクリックします。
 5. ECSコンソールの左側のナビゲーションペインから「クラスタ」を選択します。
 6. `wordpress-cluster`を選択し、「サービス」タブを選択します。
 7. `wordpress-service`を選択し、「更新」ボタンをクリックします。
 8. 「強制的に新しいデプロイ」にチェックを入れます。
-9. 「タスク定義」で「新しいリビジョンを使用」を選択し、最新のリビジョンを選択します。
-10. 「更新」ボタンをクリックします。
-11. [CodeDeployコンソール](https://ap-northeast-1.console.aws.amazon.com/codesuite/codedeploy/deployments?region=ap-northeast-1)に移動し、デプロイの進行状況を確認します。
-12. デプロイが完了したら、ブラウザでWordPressサイトを再度開き、バージョンが6.7.2に更新されていることを確認します。
+9. 「タスク定義」で、最新のリビジョンを選択します。
+10. デプロイオプション
+  - アプリケーション名: 自動で作成されているアプリケーション
+  - デプロイグループ名: 自動で作成されているデプロイグループ
+  - デプロイ設定: `CodeDeployDefault.ECSAllAtOnce`
+11. 「更新」ボタンをクリックします。
+12. [CodeDeployコンソール](https://ap-northeast-1.console.aws.amazon.com/codesuite/codedeploy/deployments?region=ap-northeast-1)に移動し、デプロイの進行状況を確認します。
+13. デプロイが完了したら、ブラウザでWordPressサイトを再度開き、バージョンが6.7.2に更新されていることを確認します。
 
 ## 12. ロールバックの確認
 
 1. CodeDeployコンソールでデプロイを選択します。
-2. 「ロールバック」ボタンをクリックします。
+2. 「デプロイを停止してロールバック」ボタンをクリックします。
 3. ロールバックが完了したら、ブラウザでWordPressサイトを再度開き、バージョンが6.6.2に戻っていることを確認します。
 
 ## 13. プロダクション環境での考慮事項
@@ -341,19 +350,20 @@ WORDPRESS_NONCE_SALT=<生成された値>
 
 ハンズオン終了後は、以下の順序でリソースを削除してください：
 
-1. ECSサービス（`wordpress-service`）
-2. ALB（`wordpress-alb`）
+1. *ECSサービス（`wordpress-service`）
+2. *ALB（`wordpress-alb`）
 3. ターゲットグループ
 4. ECSクラスタ（`wordpress-cluster`）
 5. ECSタスク定義（すべてのリビジョンを登録解除してから削除）
-6. RDSインスタンス（`wordpress-db`）
+6. *RDSインスタンス（`wordpress-db`）
+7. *RDSスナップショット(存在する場合)
 7. RDSサブネットグループ（`wordpress-subnet-group`）
-8. EFSファイルシステム（`wordpress-efs`）
+8. *EFSファイルシステム（`wordpress-efs`）
 9. CloudFormationスタック（`jawsugniigata21`）
 10. IAMロール（`CodeDeployECSRole`と`ecsTaskExecutionRole`）
 11. CloudWatch Logsのロググループ
 
-**注意**: 特に「*」がついているリソース（ECSサービス、ALB、RDS、EFS）は課金が発生するため、忘れずに削除してください。
+**注意**: 特に「*」がついているリソース（ECSサービス、ALB、RDS、EFS）は課金が発生する場合があるため、忘れずに削除してください。
 
 
 
