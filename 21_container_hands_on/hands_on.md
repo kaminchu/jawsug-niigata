@@ -20,7 +20,7 @@
 | **EFS**           | Wordpressの`wp-content`を保存するためのストレージ。これがないとファイルが複数インスタンス間で共有できません。 |
 | **Fargate**       | Wordpressインスタンスを構築・管理するためのコンテナサービスです。 |
 | **RDS**           | Wordpressのデータベース（MySQL）を提供するサービスです。    |
-| **CodeDeploy**           | ECSへのデプロイに使われます。ブルーグリーンデプロイメントに必要です。    |
+| **CodeDeploy**    | ECSへのデプロイに使われます。ブルーグリーンデプロイメントに必要です。    |
 
 
 ## 1. VPCの作成
@@ -30,7 +30,7 @@
 1. 以下のURLをクリックして、CloudFormationのクイック作成画面に移動します。
 
 ```
-https://ap-northeast-1.console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fs3.ap-northeast-1.amazonaws.com%2Fcf-templates-nxbtnduaoqyw0-ap-northeast-1%2Ftemplate-1740722027707.yaml&stackName=jawsugniigata21
+https://ap-northeast-1.console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fs3.ap-northeast-1.amazonaws.com%2Fcf-templates-nxbtnduaoqyw0-ap-northeast-1%2Ftemplate.yml&stackName=jawsugniigata21
 ```
 
 2. スタック名が「jawsugniigata21」になっていることを確認します。
@@ -73,7 +73,7 @@ WordPressのデータを保存するためのMySQLデータベースをRDSで作
 **設定**
 - DB インスタンス識別子: `wordpress-db`
 - マスターユーザー名: `admin`
-- マスターパスワード: 自動生成を選択するし、表示されたパスワードをメモしておく
+- マスターパスワード: 自動生成を選択し、表示されたパスワードをメモしておく
 
 **インスタンス設定**
 - DB インスタンスクラス: バースト可能クラス `db.t4g.micro`
@@ -100,7 +100,7 @@ WordPressのデータを保存するためのMySQLデータベースをRDSで作
 
 4. 「データベースの作成」ボタンをクリックします。
 5. 上部バナーの「認証情報の詳細を表示」クリックし、表示されたパスワードをメモしておきます。
-6. データベースの作成が完了したら、詳細を開いて**エンドポイント**をメモしておきます。
+6. データベースの作成が完了したら、DB識別子「wordpress-db」をクリックして詳細を開いてエンドポイントをメモしておきます。
 
 ## 3. IAMロールの作成
 
@@ -157,7 +157,7 @@ WordPressのアップロードファイルなどを永続化するためのEFS�
 ## 5. ECSクラスタの作成
 
 1. [ECSコンソール](https://ap-northeast-1.console.aws.amazon.com/ecs/home?region=ap-northeast-1#/clusters)に移動します。
-2. 「クラスタの作成」ボタンをクリックします。
+2. 左側のナビゲーションペインから「クラスター」を選択し、「クラスタの作成」ボタンをクリックします。
 3. 以下の設定でクラスタを作成します：
 
 **クラスター設定**
@@ -201,6 +201,9 @@ WordPressのアップロードファイルなどを永続化するためのEFS�
   - プロトコル: `tcp`
 
 **環境変数**
+
+「環境変数を追加」クリックして一つずつキーと値を入れていきます。
+
 以下の環境変数を追加します：
 
 ```
@@ -212,6 +215,9 @@ WORDPRESS_DB_NAME=wordpress
 
 また、以下のリンクにアクセスして、WordPressの認証キーを生成し、以下の環境変数に設定します：
 https://api.wordpress.org/secret-key/1.1/salt/
+
+この値を入れないと、起動するたびに変更されて、ログインしているユーザーがログアウトされるなどするそうです。
+
 
 ```
 WORDPRESS_AUTH_KEY=<生成された値>
@@ -229,15 +235,16 @@ WORDPRESS_NONCE_SALT=<生成された値>
   - ボリューム名: `wordpress-content`
   - 設定タイプ: タスク定義の作成時に設定
   - ボリュームタイプ: `EFS`
-  - ファイルシステムID: <EFS作成時にメモしたID>
+  - ファイルシステムID: `wordpress-efs`
   - ルートディレクトリ: `/`（デフォルトのまま）
   - アクセスポイントID: 使用しない
 
 - コンテナマウントポイント:
-  - コンテナ名: `wordpress`
-  - ソースボリューム: `wordpress-content`
-  - コンテナパス: `/var/www/html/wp-content`
-  - 読み取り専用: チェックを外す
+  - 「マウントポイントの追加」をクリックして設定:
+    - コンテナ名: `wordpress`
+    - ソースボリューム: `wordpress-content`
+    - コンテナパス: `/var/www/html/wp-content`
+    - 読み取り専用: チェックを外す
 
 4. 「作成」ボタンをクリックします。
 
@@ -318,8 +325,8 @@ WORDPRESS_NONCE_SALT=<生成された値>
 1. [EC2コンソール](https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#LoadBalancers:)に移動し、「ロードバランサー」を選択します。
 2. `wordpress-alb`を選択し、「DNS名」をコピーします。
 3. ブラウザで`http://<ALBのDNS名>/`にアクセスします。
-4. WordPressの初期設定画面が表示されるので、必要な情報を入力してWordPressをセットアップします。
-5. セットアップ完了後、WordPressの管理画面にログインし、いくつかのメディアファイルをアップロードします。(EFSの動作を確認するため)
+4. WordPressの初期設定画面が表示されるので、適当なemailやパスワードを設定し、初期セットアップを完了します。
+5. セットアップ完了後、WordPressの管理画面にログインし、左ペインの「メディア」を開き、画像ファイルなどをアップロードします。(EFSが動作していることを確認するため)
 
 ## 11. WordPressのバージョンアップ
 
@@ -332,7 +339,7 @@ WORDPRESS_NONCE_SALT=<生成された値>
 5. ECSコンソールの左側のナビゲーションペインから「クラスタ」を選択します。
 6. `wordpress-cluster`を選択し、「サービス」タブを選択します。
 7. `wordpress-service`を選択し、「更新」ボタンをクリックします。
-8. 「強制的に新しいデプロイ」にチェックを入れます。
+8. 「新しいデプロイの強制」にチェックを入れます。
 9. 「タスク定義」で、最新のリビジョンを選択します。
 10. デプロイオプション
   - アプリケーション名: 自動で作成されているアプリケーション
@@ -376,7 +383,7 @@ WORDPRESS_NONCE_SALT=<生成された値>
 9. *EFSファイルシステム（`wordpress-efs`）
 10. CloudFormationスタック（`jawsugniigata21`）
 11. IAMロール（`CodeDeployECSRole`と`ecsTaskExecutionRole`）
-12. CloudWatch Logsのロググループ
+12. CloudWatch Logsのロググループ(`/ecs/wordpress-task`)
 
 **注意**: 特に「*」がついているリソース（ECSサービス、ALB、RDS、EFS）は課金が発生する場合があるため、忘れずに削除してください。
 

@@ -24,11 +24,11 @@ Parameters:
     Description: The CIDR block for the ALB public subnet two in availability zone two
     Type: String
     Default: 10.0.4.0/24
-  EFSPublicSubnet1CIDR:
+  EFSSubnet1CIDR:
     Description: The CIDR block for the EFS public subnet one in availability zone one
     Type: String
     Default: 10.0.5.0/24
-  EFSPublicSubnet2CIDR:
+  EFSSubnet2CIDR:
     Description: The CIDR block for the EFS public subnet two in availability zone two
     Type: String
     Default: 10.0.6.0/24
@@ -100,11 +100,11 @@ Resources:
       Tags:
         - Key: Name
           Value: ALBPublicSubnet2
-  EFSPublicSubnet1:
+  EFSSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref WPVPC
-      CidrBlock: !Ref EFSPublicSubnet1CIDR
+      CidrBlock: !Ref EFSSubnet1CIDR
       AvailabilityZone: !FindInMap
         - RegionMap
         - !Ref AWS::Region
@@ -112,12 +112,12 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: EFSPublicSubnet1
-  EFSPublicSubnet2:
+          Value: EFSSubnet1
+  EFSSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref WPVPC
-      CidrBlock: !Ref EFSPublicSubnet2CIDR
+      CidrBlock: !Ref EFSSubnet2CIDR
       AvailabilityZone: !FindInMap
         - RegionMap
         - !Ref AWS::Region
@@ -125,7 +125,7 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: EFSPublicSubnet2
+          Value: EFSSubnet2
   NATPublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
@@ -238,16 +238,23 @@ Resources:
     Properties:
       SubnetId: !Ref NATPublicSubnet2
       RouteTableId: !Ref PublicRouteTable
+  EFSRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref WPVPC
+      Tags:
+        - Key: Name
+          Value: EFSRouteTable
   EFSSubnetAssoc1:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref EFSPublicSubnet1
-      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref EFSSubnet1
+      RouteTableId: !Ref EFSRouteTable
   EFSSubnetAssoc2:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref EFSPublicSubnet2
-      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref EFSSubnet2
+      RouteTableId: !Ref EFSRouteTable
   FargateRouteTable1:
     Type: AWS::EC2::RouteTable
     Properties:
