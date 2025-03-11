@@ -10,14 +10,14 @@
 
 ## 作るもの
 
-見にくいので、矢印ははしょってます
+見にくいので、矢印は省略します
 ![aws.drawio](./aws.drawio.svg)
 
 | コンポーネント   | 説明                                                         |
 |------------------|--------------------------------------------------------------|
 | **NAT Gateway**   | Wordpressが外部と通信するために作成されます。                |
-| **ALB**           | 複数のWordpressインスタンス用のロードバランサーで、ブルーグリーンデプロイメントに必要です。 |
-| **EFS**           | Wordpressの`wp-content`を保存するためのストレージ。これがないとファイルが複数インスタンス間で共有できません。 |
+| **Application Load Balancer(ALB)**           | 複数のWordpressインスタンス用のロードバランサーで、ブルーグリーンデプロイメントに必要です。 |
+| **Elastic File System(EFS)**           | Wordpressの`wp-content`を保存するためのストレージ。これがないとファイルが複数インスタンス間で共有できません。 |
 | **Fargate**       | Wordpressインスタンスを構築・管理するためのコンテナサービスです。 |
 | **RDS**           | Wordpressのデータベース（MySQL）を提供するサービスです。    |
 | **CodeDeploy**    | ECSへのデプロイに使われます。ブルーグリーンデプロイメントに必要です。    |
@@ -29,9 +29,8 @@
 
 1. 以下のURLをクリックして、CloudFormationのクイック作成画面に移動します。
 
-```
-https://ap-northeast-1.console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fs3.ap-northeast-1.amazonaws.com%2Fcf-templates-nxbtnduaoqyw0-ap-northeast-1%2Ftemplate.yml&stackName=jawsugniigata21
-```
+[CloudFormationテンプレート](https://ap-northeast-1.console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/quickcreate?templateURL=https%3A%2F%2Fs3.ap-northeast-1.amazonaws.com%2Fcf-templates-nxbtnduaoqyw0-ap-northeast-1%2Ftemplate.yml&stackName=jawsugniigata21)
+
 
 2. スタック名が「jawsugniigata21」になっていることを確認します。
 3. 画面下部の「スタックの作成」ボタンをクリックします。
