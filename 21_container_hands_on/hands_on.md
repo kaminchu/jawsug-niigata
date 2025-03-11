@@ -212,7 +212,7 @@ WORDPRESS_DB_PASSWORD=<RDS作成時にメモしたパスワード>
 WORDPRESS_DB_NAME=wordpress
 ```
 
-また、以下のリンクにアクセスして、WordPressの認証キーを生成し、以下の環境変数に設定します：
+また、以下のリンクにアクセスして、WordPressの認証キーを生成し、以下の環境変数に設定します:  
 https://api.wordpress.org/secret-key/1.1/salt/
 
 この値を入れないと、起動するたびに変更されて、ログインしているユーザーがログアウトされるなどするそうです。
