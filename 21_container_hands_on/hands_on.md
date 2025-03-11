@@ -11,16 +11,17 @@
 ## 作るもの
 
 見にくいので、矢印は省略します
+
 ![aws.drawio](./aws.drawio.svg)
 
 | コンポーネント   | 説明                                                         |
 |------------------|--------------------------------------------------------------|
 | **NAT Gateway**   | Wordpressが外部と通信するために作成されます。                |
-| **Application Load Balancer(ALB)**           | 複数のWordpressインスタンス用のロードバランサーで、ブルーグリーンデプロイメントに必要です。 |
+| **Application Load Balancer(ALB)**           | 複数のWordPressインスタンスへのトラフィックを分散させ、ブルーグリーンデプロイメントに必要です。今回はECSサービス作成時に自動で作成されます。   |
 | **Elastic File System(EFS)**           | Wordpressの`wp-content`を保存するためのストレージ。これがないとファイルが複数インスタンス間で共有できません。 |
 | **Fargate**       | Wordpressインスタンスを構築・管理するためのコンテナサービスです。 |
 | **RDS**           | Wordpressのデータベース（MySQL）を提供するサービスです。    |
-| **CodeDeploy**    | ECSへのデプロイに使われます。ブルーグリーンデプロイメントに必要です。    |
+| **CodeDeploy**    | ECSへのデプロイに使われます。ブルーグリーンデプロイメントに必要です。今回はECSサービス作成時に自動で作成されます。    |
 
 
 ## 1. VPCの作成
@@ -212,7 +213,8 @@ WORDPRESS_DB_PASSWORD=<RDS作成時にメモしたパスワード>
 WORDPRESS_DB_NAME=wordpress
 ```
 
-また、以下のリンクにアクセスして、WordPressの認証キーを生成し、以下の環境変数に設定します:  
+また、以下のリンクにアクセスして、WordPressの認証キーを生成し、以下の環境変数に設定します:
+
 https://api.wordpress.org/secret-key/1.1/salt/
 
 この値を入れないと、起動するたびに変更されて、ログインしているユーザーがログアウトされるなどするそうです。
