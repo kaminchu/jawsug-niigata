@@ -353,6 +353,7 @@ WORDPRESS_NONCE_SALT=<生成された値>
 11. 「更新」ボタンをクリックします。
 12. [CodeDeployコンソール](https://ap-northeast-1.console.aws.amazon.com/codesuite/codedeploy/deployments?region=ap-northeast-1)に移動し、デプロイの進行状況を確認します。
 13. デプロイが完了したら、ブラウザでWordPressサイトを再度開き、バージョンが6.7.2に更新されていることを確認します。
+14. 左ペインの「メディア」を開き、アップロードした画像ファイルがあることを確認します。
 
 ## 12. ロールバックの確認
 
