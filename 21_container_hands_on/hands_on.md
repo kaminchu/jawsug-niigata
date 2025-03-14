@@ -218,7 +218,7 @@ WORDPRESS_DB_NAME=wordpress
 
 https://api.wordpress.org/secret-key/1.1/salt/
 
-この値を入れないと、起動するたびに変更されて、ログインしているユーザーがログアウトされるなどするそうです。
+この値を入れないと、ログインできないです。(詳しくはあまり知らない)
 
 
 ```
